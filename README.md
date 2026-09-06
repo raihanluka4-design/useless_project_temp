@@ -1,7 +1,3 @@
-<img width="680" height="716" alt="tangle-bureau-architecture" src="https://github.com/user-attachments/assets/def67e8b-a82c-4a7d-bcdd-c35e3d3cb549" /><img width="1280" height="640" alt="git (1)" src="https://github.com/user-attachments/assets/8920b256-2ba8-4988-b824-5351134eb4bd" />
-
-
-
 # tangle-bureau 🎯
 
 
