@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>National Cable Tangle Assessment Bureau</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    font-family: 'Georgia', serif;
+    background: #f4f1ea;
+    color: #2b2620;
+    display: flex;
+    justify-content: center;
+    padding: 30px 16px;
+  }
+  .wrap { width: 100%; max-width: 540px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header .seal { font-size: 2.2rem; }
+  header h1 { font-size: 1.3rem; margin-top: 6px; }
+  header .sub { font-size: 0.78rem; opacity: 0.6; font-style: italic; margin-top: 4px; }
+
+  .panel {
+    background: white;
+    border: 2px solid #2b2620;
+    border-radius: 4px;
+    padding: 22px;
+    margin-bottom: 18px;
+  }
+  .upload-box {
+    border: 2px dashed #999;
+    border-radius: 6px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .upload-box:hover { background: #faf9f6; }
+  input[type=file] { display: none; }
+  #preview { max-width: 100%; margin-top: 14px; border-radius: 6px; display: none; }
+
+  button {
+    width: 100%;
+    margin-top: 16px;
+    padding: 13px;
+    border: none;
+    border-radius: 6px;
+    background: #2b2620;
+    color: white;
+    font-weight: bold;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #status { text-align: center; font-size: 0.85rem; opacity: 0.6; margin-top: 10px; }
+
+  .certificate {
+    display: none;
+    border: 3px double #2b2620;
+    padding: 24px;
+    text-align: center;
+    background: #fffdf8;
+    position: relative;
+  }
+  .certificate .caseno { font-size: 0.7rem; opacity: 0.5; position: absolute; top: 10px; right: 14px; }
+  .certificate h2 { font-size: 1.1rem; letter-spacing: 1px; margin-bottom: 4px; }
+  .certificate .date { font-size: 0.7rem; opacity: 0.5; margin-bottom: 18px; }
+  .score {
+    font-size: 3rem;
+    font-weight: bold;
+    margin: 10px 0;
+  }
+  .class-tag {
+    display: inline-block;
+    padding: 6px 16px;
+    border: 2px solid #2b2620;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-bottom: 14px;
+  }
+  .certificate .detail { font-size: 0.85rem; margin: 6px 0; opacity: 0.85; }
+  .certificate .disclaimer {
+    font-size: 0.68rem;
+    opacity: 0.5;
+    margin-top: 18px;
+    font-style: italic;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+  }
+  .action-row { display: flex; gap: 10px; margin-top: 18px; }
+  .action-row button { margin-top: 0; }
+  .btn-secondary { background: white; color: #2b2620; border: 2px solid #2b2620 !important; }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .panel, header, .action-row { display: none !important; }
+    .certificate { display: block !important; border: 2px solid #000; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="seal">🪢</div>
+    <h1>NATIONAL CABLE TANGLE ASSESSMENT BUREAU</h1>
+    <div class="sub">Official knot severity analysis, powered by real edge-detection.</div>
+  </header>
+
+  <div class="panel">
+    <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+      <div id="uploadText">📎 Click to upload a photo of your tangled wires</div>
+      <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)">
+      <img id="preview">
+    </div>
+    <button id="assessBtn" onclick="runAssessment()" disabled>Submit for Official Assessment</button>
+    <div id="status"></div>
+  </div>
+
+  <div class="certificate" id="certificate">
+    <div class="caseno" id="caseNo"></div>
+    <h2>CERTIFICATE OF TANGLE SEVERITY</h2>
+    <div class="date" id="dateStamp"></div>
+    <div class="score" id="scoreVal">0</div>
+    <div style="font-size:0.75rem; opacity:0.6; margin-top:-8px; margin-bottom:14px;">TANGLE SEVERITY INDEX</div>
+    <div class="class-tag" id="classTag">CLASS I</div>
+    <div class="detail" id="crossingDetail"></div>
+    <div class="detail" id="timeDetail"></div>
+    <div class="detail" id="verdictDetail"></div>
+    <div class="disclaimer">This certificate is not legally binding, but is emotionally very validating. Bureau findings are final and non-negotiable. Please untangle responsibly.</div>
+  </div>
+
+  <div class="action-row" id="actionRow" style="display:none;">
+    <button class="btn-secondary" onclick="resetAssessment()">📎 Upload New Photo</button>
+    <button onclick="printCertificate()">🖨️ Print Certificate</button>
+  </div>
+</div>
+
+<script>
+let uploadedImg = null;
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const img = new Image();
+    img.onload = function() {
+      uploadedImg = img;
+      document.getElementById('preview').src = evt.target.result;
+      document.getElementById('preview').style.display = 'block';
+      document.getElementById('uploadText').textContent = '✅ Photo loaded — ready for assessment';
+      document.getElementById('assessBtn').disabled = false;
+    };
+    img.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function runAssessment() {
+  document.getElementById('status').textContent = 'Running edge-detection analysis...';
+  document.getElementById('assessBtn').disabled = true;
+
+  // Let the UI update before the (slightly heavy) pixel loop runs
+  setTimeout(() => {
+    const result = analyzeTangle(uploadedImg);
+    if (result === null) {
+      document.getElementById('status').textContent = '⚠️ No clear wire detected — try a closer, well-lit photo.';
+      document.getElementById('assessBtn').disabled = false;
+      return;
+    }
+    showCertificate(result);
+    document.getElementById('status').textContent = '';
+    document.getElementById('assessBtn').disabled = false;
+    document.getElementById('actionRow').style.display = 'flex';
+  }, 300);
+}
+
+function analyzeTangle(img) {
+  // Step 1: draw the image small (for speed) onto a working canvas
+  const maxDim = 220;
+  const scale = Math.min(maxDim / img.width, maxDim / img.height, 1);
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const data = imgData.data;
+
+  // Step 2: convert to grayscale
+  const gray = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    const r = data[i*4], g = data[i*4+1], b = data[i*4+2];
+    gray[i] = 0.299*r + 0.587*g + 0.114*b;
+  }
+
+  // Step 3: Sobel edge detection — highlights sharp brightness changes,
+  // which is what wire outlines and knots look like.
+  const gx = [-1,0,1, -2,0,2, -1,0,1];
+  const gy = [-1,-2,-1, 0,0,0, 1,2,1];
+  const threshold = 60;
+  const edgeMask = new Uint8Array(w * h); // 1 = this pixel is an edge
+  let edgePixels = 0;
+
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      let sumX = 0, sumY = 0, k = 0;
+      for (let ky = -1; ky <= 1; ky++) {
+        for (let kx = -1; kx <= 1; kx++) {
+          const val = gray[(y+ky)*w + (x+kx)];
+          sumX += val * gx[k];
+          sumY += val * gy[k];
+          k++;
+        }
+      }
+      if (Math.sqrt(sumX*sumX + sumY*sumY) > threshold) {
+        edgeMask[y*w + x] = 1;
+        edgePixels++;
+      }
+    }
+  }
+
+  // Not enough wire detected at all (blank wall, empty desk, etc.)
+  if (edgePixels < 15) return null;
+
+  // Step 4: dilate the edge map twice. A single wire produces two thin
+  // parallel edge lines (its top and bottom outline) — dilating merges
+  // those into one solid "wire body" shape so we can measure its footprint.
+  function dilate(mask) {
+    const out = new Uint8Array(w * h);
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const i = y*w + x;
+        out[i] = (mask[i] || mask[i-1] || mask[i+1] || mask[i-w] || mask[i+w]) ? 1 : 0;
+      }
+    }
+    return out;
+  }
+  let mask = dilate(edgeMask);
+  mask = dilate(mask);
+
+  // Step 5: compactness — how much of the wire's own bounding box the
+  // wire actually fills. A single stretched-out wire draws a thin diagonal
+  // through a LARGE box (low compactness). A real tangled clump balls up
+  // into a SMALL, dense box (high compactness). This is the key fix: it's
+  // what tells "one long wire" apart from "an actual knot."
+  let minX = w, maxX = 0, minY = h, maxY = 0, foregroundArea = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (mask[y*w + x]) {
+        foregroundArea++;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  const boundingArea = Math.max(1, (maxX - minX + 1) * (maxY - minY + 1));
+  const compactness = Math.min(1, foregroundArea / boundingArea);
+
+  // Step 6: estimated crossing points. Slide an 8x8 window across the
+  // masked region — a window that's almost entirely "wire" usually means
+  // multiple strands are overlapping there (a crossing), whereas a single
+  // strand only ever fills a thin slice of any window it passes through.
+  const win = 8;
+  let thickCells = 0, totalCells = 0;
+  for (let y = 0; y < h - win; y += win) {
+    for (let x = 0; x < w - win; x += win) {
+      let filled = 0;
+      for (let dy = 0; dy < win; dy++) {
+        for (let dx = 0; dx < win; dx++) {
+          if (mask[(y+dy)*w + (x+dx)]) filled++;
+        }
+      }
+      const density = filled / (win * win);
+      if (density > 0.4) { totalCells++; if (density > 0.55) thickCells++; }
+    }
+  }
+  const estimatedCrossings = Math.round(thickCells * 0.6);
+
+  // Step 7: combine into the final severity score. Compactness acts as a
+  // multiplier — low compactness (a single wire) pulls the score way down
+  // even if edge density is high, which is exactly the bug this fixes.
+  const totalPixels = (w - 2) * (h - 2);
+  const edgeDensity = (edgePixels / totalPixels) * 100;
+  const compactnessFactor = 0.2 + 0.8 * compactness;
+  const score = Math.min(100, Math.round(edgeDensity * compactnessFactor * 3.4));
+
+  return { score, crossings: estimatedCrossings };
+}
+
+function showCertificate(result) {
+  const score = result.score;
+  const cert = document.getElementById('certificate');
+  cert.style.display = 'block';
+
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('crossingDetail').textContent = 'Estimated crossing points: ~' + result.crossings;
+  document.getElementById('caseNo').textContent = 'CASE #TG-' + Math.floor(100000 + Math.random()*899999);
+  document.getElementById('dateStamp').textContent = 'Issued ' + new Date().toLocaleString();
+
+  let cls, verdict, minutes;
+  if (score < 20) {
+    cls = "CLASS I — MILD DISTURBANCE";
+    verdict = "A minor inconvenience. Society may proceed unaffected.";
+    minutes = 1;
+  } else if (score < 40) {
+    cls = "CLASS II — MODERATE ENTANGLEMENT";
+    verdict = "Notable knotting detected. Patience is advised.";
+    minutes = 4;
+  } else if (score < 60) {
+    cls = "CLASS III — SEVERE KNOT CLUSTER";
+    verdict = "This tangle has developed structural integrity of its own.";
+    minutes = 9;
+  } else if (score < 80) {
+    cls = "CLASS IV — STRUCTURAL CHAOS";
+    verdict = "The Bureau recommends emotional preparation before untangling.";
+    minutes = 17;
+  } else {
+    cls = "CLASS V — BEYOND HUMAN INTERVENTION";
+    verdict = "Recommendation: purchase a new cable. This one has won.";
+    minutes = 34;
+  }
+
+  document.getElementById('classTag').textContent = cls;
+  document.getElementById('verdictDetail').textContent = verdict;
+  document.getElementById('timeDetail').textContent = 'Estimated untangling time: ~' + minutes + ' minutes';
+}
+
+function resetAssessment() {
+  uploadedImg = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('preview').src = '';
+  document.getElementById('uploadText').textContent = '📎 Click to upload a photo of your tangled wires';
+  document.getElementById('assessBtn').disabled = true;
+  document.getElementById('status').textContent = '';
+  document.getElementById('certificate').style.display = 'none';
+  document.getElementById('actionRow').style.display = 'none';
+}
+
+function printCertificate() {
+  window.print();
+}
+</script>
+</body>
+</html>
